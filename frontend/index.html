@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>🎵 Auto-Generated YouTube Music Search</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding:20px; max-width:900px; margin:auto; }
+    h1 { margin-bottom: 15px; }
+    input { width:70%; padding:8px; font-size:16px; }
+    button { padding:8px 12px; font-size:16px; margin-left:5px; }
+    .result { display:flex; gap:15px; padding:15px 0; border-bottom:1px solid #ddd; }
+    img { width:160px; height:160px; object-fit:cover; border-radius:6px; }
+    .meta { max-width:700px; }
+    .meta b { font-size:18px; display:block; margin-bottom:3px; }
+    .id { font-family:monospace; font-size:12px; color:#666; margin:3px 0; }
+    .desc { margin-top:6px; font-size:13px; color:#333; white-space:pre-line; }
+  </style>
+</head>
+<body>
+  <h1>🎵 Auto-Generated YouTube Music Search</h1>
+  <div>
+    <input id="songInput" placeholder="Search e.g. Elton John Good Morning To The Night" />
+    <button id="searchBtn">Search</button>
+  </div>
+  <div id="results"></div>
+
+  <script>
+    const input = document.getElementById('songInput');
+    const btn = document.getElementById('searchBtn');
+    const results = document.getElementById('results');
+
+    async function search() {
+      const song = input.value.trim();
+      if (!song) return;
+      results.innerHTML = '<p>Loading...</p>';
+
+      try {
+        const res = await fetch(`/search?song=${encodeURIComponent(song)}`);
+        const data = await res.json();
+
+        if (!Array.isArray(data) || !data.length) {
+          results.innerHTML = '<p>No auto-generated Topic results found</p>';
+          return;
+        }
+
+        results.innerHTML = '';
+        data.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'result';
+          div.innerHTML = `
+            <img src="${item.albumCover}" alt="Album Cover">
+            <div class="meta">
+              <b>${escapeHtml(item.title)}</b>
+              <div>${escapeHtml(item.channelTitle)} • ${new Date(item.publishedAt).toLocaleDateString()}</div>
+              <div class="id">ID: ${item.videoId} • ${item.duration}</div>
+              <div class="desc">${escapeHtml(item.description)}</div>
+            </div>
+          `;
+          results.appendChild(div);
+        });
+      } catch (err) {
+        results.innerHTML = '<p style="color:red;">Error: ' + err.message + '</p>';
+      }
+    }
+
+    btn.addEventListener('click', search);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') search();
+    });
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+      }[c]));
+    }
+  </script>
+</body>
+</html>
